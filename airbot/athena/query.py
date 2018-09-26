@@ -54,6 +54,7 @@ class AthenaQuery:
 
     @classmethod
     def json(cls, athenaresponse):
+        #print athenaresponse
         records = []
         fields = athenaresponse["ResultSet"]["ResultSetMetadata"]["ColumnInfo"]
         for r in athenaresponse["ResultSet"]["Rows"][1:] :
@@ -61,27 +62,32 @@ class AthenaQuery:
             record = {}
             for index, v in enumerate(data) :
                 fieldname = fields[index]["Name"]
-                fieldtype= v.keys()[0]
-                record[fieldname] = v[fieldtype]
+                if len(v.keys()):
+                    fieldtype= v.keys()[0]
+                    record[fieldname] = v[fieldtype]
+                else :
+                    record[fieldname] = ""
             records.append(record)
         return records
 
     @classmethod
     def get_results(cls,**kwargs):
         client = boto3.client('athena', region_name="eu-west-1")
+        #print "get_results", kwargs
         try :
             response = client.get_query_results(
                 QueryExecutionId = kwargs["QueryExecutionId"],
                 MaxResults = 500
             )
-            print "Response received"
+            #print "Response received"
             print pprint.pformat(response)
             return {
                 "success" : True,
                 "data" : {
                     #"records" : response["ResultSet"]["Rows"],
                     #"metadata" : response["ResultSet"]["ResultSetMetadata"]["ColumnInfo"],
-                    "records" : cls.json(response)
+                    "records" : cls.json(response),
+                    "schema" : [{"name" : c["Name"],"type" : c["Type"]} for c in response["ResultSet"]["ResultSetMetadata"]["ColumnInfo"]]
                 }
             }
         except Exception ,e:
@@ -94,23 +100,23 @@ class AthenaQuery:
 
     @classmethod
     def run(cls,**kwargs):
-        print kwargs
+        #print kwargs
         start = cls.start(**kwargs)
         if start["success"] is True:
             completed = False
-            nbtry = 10
+            nbtry = 25
             while (completed is False) and (nbtry>0):
-                print "Looping "
+                #print "Looping "
                 nbtry -=1
                 watcher = cls.get_query_execution(**{"QueryExecutionId" : start["data"]["QueryExecutionId"]})
-                print "watcher", pprint.pformat(watcher)
+                #print "watcher", pprint.pformat(watcher)
                 if watcher["success"] is True:
                     if watcher["data"]["status"] =="SUCCEEDED":
-                        print "watcher succeeded"
+                        #print "watcher succeeded"
                         completed  = True
                         return cls.get_results(**{"QueryExecutionId" : start["data"]["QueryExecutionId"]})
                     else:
-                        print "waiting" , nbtry
+                        #print "waiting" , nbtry
                         time.sleep(3)
                 if watcher["success"] is False :
                     return watcher

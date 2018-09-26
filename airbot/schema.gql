@@ -1,0 +1,203 @@
+
+
+type Account{
+    ID : String !
+    creator : String !
+    aws : String
+    bots (options:QueryOptions): [Bot]
+    users(options:QueryOptions) :[User]
+}
+
+
+
+type User{
+    ID : String!
+    email : String!
+}
+
+
+type Bot {
+    ID : String !
+    parent  : String!
+    name : String  !
+    description : String
+    creator : String
+    entities(options:QueryOptions): [Entity]
+    intents (options:QueryOptions): [Intent]
+}
+
+
+
+type Entity {
+    ID : String!
+    parent  : String!
+    name : String !
+    description : String
+    tags : String
+    s3 : String
+    #aliases : [String]
+    #tablename : String
+    doc : String
+    variables(options:QueryOptions) : [Variable]
+}
+
+type Variable {
+    ID : String!
+    parent  : String!
+    name : String !
+    description : String
+    tags : String
+    aliases : [String]
+}
+
+
+
+
+type Intent {
+    ID : String !
+    parent  : String!
+    description : String
+    name : String !
+    tags : String
+    rules (options:QueryOptions): [Rule]
+    reply : Reply
+}
+
+
+type Rule {
+    ID : String!
+    parent  : String!
+    name : String !
+    description : String
+    replacements : String!
+}
+
+
+
+
+
+type Reply {
+    ID : String !
+    parent  : String!
+    sql : String !
+    replies : String !
+    chart : String
+}
+
+
+
+
+
+input  New{
+    name : String !
+    description : String
+    tags : String
+
+    doc : String
+    aliases : String
+    sql : String
+    replacements : String
+}
+
+
+input Update{
+    description : String ,
+    tags : String,
+
+    aliases : String
+    sql : String
+    replacements : String
+
+    doc :String
+
+}
+
+type TableColumn{
+    name: String!
+    type : String!
+}
+
+type TableSchema{
+    columns : [TableColumn]
+}
+
+
+input QueryOptions{
+    limit : Int
+    offset : Int,
+    search : String
+}
+
+type Mutation {
+
+
+    createAccount : Account
+    deleteAccount(accountid:ID!) : Boolean
+    updateAccount(accountid:ID!) : Boolean
+
+    inviteUser (email:String!) : User
+    createBot(accountid : ID!, input : New) : Bot
+    updateBot(botid : ID! , input : Update) : Bot
+    deleteBot(botid: ID!) : Boolean
+
+    createEntity(botid : ID!, input : New) : Entity
+    updateEntity(entityid : ID!, input : Update) : Entity
+    deleteEntity(entityid: ID!) : Boolean
+
+
+    createVariable(entityid : ID!, input : New) : Variable
+    updateVariable(variableid: ID!,input : Update) : Variable
+    deleteVariable(variableid: ID!) : Boolean
+
+
+    createIntent(botid : ID! ,input : New) : Intent
+    updateIntent(intentid : ID!, input : Update) : Intent
+    deleteIntent(intentid: ID!) : Boolean
+
+
+    createRule(intentid : ID! , input : New) : Intent
+    updateRule(ruieid: ID!, input : Update) : Intent
+    deleteRule(ruleid : ID!) : Boolean
+
+    createReply(intentid : ID! , input : New) : Intent
+    updateReply(repluid : ID!,input : Update) : Intent
+    deleteReply(replyid : ID!) : Boolean
+
+
+    refreshEntitySchema(entityid:ID!) : TableSchema
+
+
+    getStsToken : String
+
+
+}
+
+
+
+
+type Query {
+
+    meta : String
+
+    getAccount(accountid: ID!) : Account
+    listMyAccounts: [Account]
+
+    listBots(options : QueryOptions) : [Bot]
+    getBot(botid: ID!) : Bot
+
+    getEntity(entityid : ID!) : Entity
+
+    getVariable(variableid : ID!): Variable
+
+    getIntent(intentid: ID!): Intent
+
+    getRule(ruleid: ID!): Intent
+
+    getReply(replyid: ID!): Reply
+
+    uploadUrl(entityid:ID!) : String
+
+
+    previewEntity(entityid:ID!) : String
+
+}

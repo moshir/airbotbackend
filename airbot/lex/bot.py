@@ -97,16 +97,16 @@ class Bot:
                 {
                     "name": s["name"],
                     "description": "xxx",
-                    "slotType": s["slottype"],
+                    "slotType": s["slotType"],
                     "slotConstraint": "Optional",
-                    "slotTypeVersion": cls.get_slot_type(name=s["slottype"])["version"]
+                    "slotTypeVersion": cls.get_slot_type(name=s["slotType"])["version"]
                 }
                 for s in intent["slots"]
             ],
             "fulfillmentActivity": {
                 'type': 'ReturnIntent'
             },
-            "sampleUtterances": intent["realisations"]
+            "sampleUtterances": intent["sampleUtterances"]
         }
         try:
             r = cls.get_intent(intent["name"])

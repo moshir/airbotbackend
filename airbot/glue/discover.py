@@ -1,15 +1,15 @@
 
 import pprint
 import boto3
-
+from airbot import errors
 class DiscoverSchema:
     @classmethod
     def run(cls,**kwargs):
         client = boto3.client('glue', region_name="eu-west-1")
         try :
             response = client.get_table(
-                DatabaseName='sampledb',
-                Name=kwargs["entity"]
+                DatabaseName=kwargs["database"],
+                Name=kwargs["tablename"]
             )
             schema = response["Table"]["StorageDescriptor"]["Columns"]
             return {

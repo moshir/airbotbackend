@@ -1,0 +1,8 @@
+boto3
+pynamodb
+hashids
+dpath
+git+ssh://git@github.com/moshir/gotolambda.git
+requests
+PyJWT
+git+ssh://git@github.com/moshir/grapher.git

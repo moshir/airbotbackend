@@ -1,8 +1,7 @@
-import boto3
 import json
 import pprint
 from datetime import date, datetime
-
+import boto3
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -26,6 +25,56 @@ class Bot:
 
     def __init__(self, name):
         self.name = name
+
+
+
+    @classmethod
+    def get_last_slot_version(cls,slotname):
+        response = cls.lex().get_slot_type_versions(
+            name=slotname,
+            maxResults=10
+        )
+        l =None
+        V =None
+        if "slotTypes" in response.keys() :
+            for v in [slt for slt in response["slotTypes"] if slt["version"]!="$LATEST"]:
+               if V is None :
+                   V = v["version"]
+                   l = v["lastUpdatedDate"]
+               else :
+                   if v["lastUpdatedDate"] > l :
+                       V= v["version"]
+                       l = v["lastUpdatedDate"]
+            return V
+        else :
+            return "$LATEST"
+
+
+
+    @classmethod
+    def get_last_intent_version(cls,intent):
+        response = cls.lex().get_intent_versions(
+            name=intent,
+            maxResults=10
+        )
+
+        l =None
+        V =None
+        #print "~~"*30
+        #print ">>",response
+        if "intents" in response.keys() :
+            for v in [int for int in response["intents"] if int["version"]!="$LATEST"]:
+               if V is None :
+                   V = v["version"]
+                   l = v["lastUpdatedDate"]
+               else :
+                   if v["lastUpdatedDate"] > l :
+                       V= v["version"]
+                       l = v["lastUpdatedDate"]
+            return V
+        else :
+            return "$LATEST"
+
 
     @classmethod
     def get_bot(cls, name):
@@ -73,6 +122,9 @@ class Bot:
         except ResourceNotFound, e:
             pass
         cls.lex().put_slot_type(**args)
+        slotdata = cls.get_slot_type(slotname)
+        "creating new version for slottype ", slotname
+        cls.lex().create_slot_type_version(name=slotname,checksum=slotdata["checksum"])
 
     @classmethod
     def get_intent(cls, name):
@@ -99,7 +151,8 @@ class Bot:
                     "description": "xxx",
                     "slotType": s["slotType"],
                     "slotConstraint": "Optional",
-                    "slotTypeVersion": cls.get_slot_type(name=s["slotType"])["version"]
+                    #"slotTypeVersion": cls.get_slot_type(name=s["slotType"])["version"]
+                    "slotTypeVersion": cls.get_last_slot_version(s["slotType"])#name=s["slotType"])["version"]
                 }
                 for s in intent["slots"]
             ],
@@ -117,6 +170,13 @@ class Bot:
             # raise e
             pass
         response = cls.lex().put_intent(**args)
+        "creating new version for intent", intent["name"]
+        r = cls.get_intent(intent["name"])
+        checksum = r["checksum"]
+        cls.lex().create_intent_version(
+            name=intent["name"],
+            checksum=r["checksum"]
+        )
 
     @classmethod
     def checksum(cls, name):
@@ -150,7 +210,8 @@ class Bot:
                     }
                 ]
             },
-            "intents": [{"intentName": i, "intentVersion": cls.get_intent(i)["version"]} for i in intents]
+            #"intents": [{"intentName": i, "intentVersion": cls.get_intent(i)["version"]} for i in intents]
+            "intents": [{"intentName": i, "intentVersion": cls.get_last_intent_version(i)} for i in intents]
         }
         try:
             checksum = cls.checksum(name)
@@ -159,6 +220,7 @@ class Bot:
             pass
 
         lex = cls.lex()
+        #print pprint.pformat(args)
         response = lex.put_bot(**args)
         return response
 
@@ -201,50 +263,36 @@ class Bot:
             }
 
 
+    @classmethod
+    def put_bot_version(cls, botname):
+        client = cls.lex()
+        args ={
+            "name":  botname
+            #"checksum" : cls.checksum(botname)
+        }
+        response = client.create_bot_version(**args)
+
+    @classmethod
+    def put_alias(cls, botname):
+        client = cls.lex()
+        checksum = cls.checksum(botname)
+        args ={
+            "name" : "demo",
+            "description" : 'demo',
+            "botVersion": '$LATEST',
+            "botName":  botname,
+        }
+        try :
+            response = client.get_bot_alias(
+                name='demo',
+                botName=botname
+            )
+            args["checksum"] = response["checksum"]
+        except Exception :
+            pass
+        response = client.put_bot_alias(**args)
+        print response
+
+
 if __name__ == "__main__":
-    '''
-    #Bot.add_slot_type("customer", ["customer", "individual", "client","user"])
-
-    """
-    Bot.add_intent({
-        "name": "howmany",
-        "description": "how many",
-        "slots": [
-            {"name": "slotzbgprgd", "slottype" : "customer"}
-        ],
-        "realisations": ["  what is the total number of {slotzbgprgd}"]
-    })
-    """
-    
-    Bot.add_intent({
-        "name": "howmanyincity",
-        "description": "how many in city",
-        "slots": [
-            {"name": "slotzbgprgd", "slottype": "customer"},
-            {"name": "slottabcdef", "slottype": "cityval"}
-        ],
-        "realisations": ["  what is the total number of {slotzbgprgd} in {slottabcdef}"]
-    })
-
-    Bot.build(name = "salesbot",intents=["howmanyincity"])
-
-
-    """
-    i = {
-        "name" : "whoisthebest",
-        "description" : "question about me",
-        "slots" : [
-            {"name" : "acountry","values": ["france","uk"]}
-        ],
-        "realisations" : ["who is the best in {acountry}","who is the leader in {acountry}"]
-    }
-    options = {
-        "name" : "mytestbot",
-        "intents" : [i]
-    }
-
-    Bot.add_slot_type("myslot",["something really nice"])
-    #print Bot.publish(options)
-    """
-    '''
-    # print pprint.pformat(Bot.send("salesbot",u"what is the overall number of customer"))
+    Bot.put_alias("FinancialCoach")

@@ -186,7 +186,6 @@ def get_intent_config(intent,graph,mode="lex"):
         "slots" : {},
         "utterances": {}
     }
-
     for rule in graph["intents"][intent].keys() :
         grammar["rules"][rule] = []
         rules = graph["intents"][intent][rule]
@@ -194,19 +193,12 @@ def get_intent_config(intent,graph,mode="lex"):
             grammar["rules"][rule].append(to_grammar(expression, to_tracery))
     for slot in graph["slots"].keys():
         grammar["slots"][slot] = graph["slots"][slot]["values"]
-        #if slot[-3:] == "val" and mode=="lex":
-        if graph["slots"][slot]["type"] == "value" :#slot[-3:] == "val" and mode=="lex":
-            grammar["slots"][slot] = graph["slots"][slot]["ref"]
-        #if slot[-2:] == "op" and mode=="lex":
-        if graph["slots"][slot]["type"] == "operator":
-            grammar["slots"][slot] = graph["slots"][slot]["ref"]
-        if graph["slots"][slot]["type"] == "entity":
+        if slot[-3:] == "val" and mode=="lex":
             grammar["slots"][slot] = graph["slots"][slot]["ref"]
 
     rules = grammar["rules"]
     rules.update(grammar["slots"])
     generator = tracery.Grammar(rules)
-    #print ">>",pprint.pformat(rules)
     for i in range(1,1000) :
         if len(grammar["utterances"])>300:
             break
@@ -272,8 +264,7 @@ def createOrUpdateLexBot(identity,botid):
         botgraph["slots"][e.name]={
             "name" : e.name,
             "ref" : "{%(name)s}"%e.attribute_values,
-            "values" : e.doc.aliases,
-            "type" : "entity"
+            "values" : e.doc.aliases
         }
         variables = Item.query("variable",Item.parent.__eq__(e.ID))
         for v in variables :
@@ -281,14 +272,12 @@ def createOrUpdateLexBot(identity,botid):
             botgraph["slots"][nameslot]={
                 "name" : nameslot ,
                 "ref": "{%(name)s}" % v.attribute_values,
-                "values" : v.doc.aliases,#json.loads(v.doc)["aliases"]
-                "type" : "variable"
+                "values" : v.doc.aliases#json.loads(v.doc)["aliases"]
             }
             opslot=v.name+"op"
             botgraph["slots"][opslot] = {
                 "name" : opslot,
                 "ref": "{%(name)sop}" % v.attribute_values,
-                "type" : "operator",
                 "values" : [
                     "in",
                     "outside",
@@ -303,7 +292,6 @@ def createOrUpdateLexBot(identity,botid):
 
             valslot=v.name+"val"
             botgraph["slots"][valslot] = {
-                "type" : "value",
                 "name" : valslot,
                 "ref": "{%(name)sval}" % v.attribute_values,
                 "values" : list(get_sample_values(v.ID))#sample_values(v.ID)
@@ -312,36 +300,31 @@ def createOrUpdateLexBot(identity,botid):
     intents = Item.query("intent",Item.parent.__eq__(botid))
     for  i in intents :
         botgraph["intents"][i.name]={}
-        #print " ",i
+        print " ",i
         rules = Item.query("rule",Item.parent.__eq__(i.ID))
         for r in rules :
             botgraph["intents"][i.name][r.name] = r.doc.replacements#json.loads(r.doc)["expressions"]
 
-
-    #print "~BG~%~~"*20
-    #print pprint.pformat(botgraph)
-    logger().info("Creating bot %s", botid)
+    logger().critical("Creating bot %s", botid)
     intents = []
     for intent in botgraph["intents"].keys():
         logger().critical("Adding Intent %s", intent)
         intent_config = get_intent_config(intent, botgraph,"lex")
-        #print "** ** ** "*30
         #print pprint.pformat(intent_config)
-        #print "-- -- --  "*30
         intents.append(intent_config)
+        #print pprint.pformat(intent_config)
         for slot in intent_config["slots"]:
             logger().critical("Adding Slot Type `%s`",slot["name"])
-            #print pprint.pformat(slot["enumerationValues"])
+            print pprint.pformat(slot["enumerationValues"])
             Bot.add_slot_type(slot["name"], slot["enumerationValues"])
 
-        logger().critical("Saving Intent `%s` to Lex",intent)
         Bot.add_intent(intent_config)
 
-    logger().info("Putting Bot %s", bot.name)
+    logger().critical("Putting Bot %s", bot.name)
     Bot.build(bot.name, intents=[i["name"] for i in intents ])
-    logger().info("Putting Bot Alias %s %s", bot.name, "demo")
-    Bot.put_alias(bot.name)
-    Bot.put_bot_version(bot.name)
+
+
+
     return botgraph
 
 

@@ -9,6 +9,7 @@ class Crawler:
     def glue(cls):
         return boto3.client('glue', region_name="eu-west-1")
 
+
     @classmethod
     def delete(cls, **kwargs):
         try :
@@ -18,6 +19,17 @@ class Crawler:
         except Exception :
             return
 
+    @classmethod
+    def get_table(cls, database, tablename):
+        client = cls.glue()
+        try :
+            response = client.get_table(
+                DatabaseName=database,
+                Name=tablename
+            )
+            return response["Table"]["StorageDescriptor"]["Columns"]
+        except Exception :
+            raise errors.ObjectNotFound(database+"."+tablename)
     @classmethod
     def get(cls,**kwargs):
         try :

@@ -8,6 +8,16 @@ import json
 import zlib
 import md5
 import itertools
+from pynamodb.attributes import ListAttribute
+
+def merge_doc(entity) :
+    doc = entity.attribute_values
+    if "doc" in doc.keys() :
+        doc.update(doc["doc"].attribute_values)
+        del doc["doc"]
+    return doc
+
+
 
 def encode(d):
     return json.dumps(d).encode("zlib_codec").encode("base64_codec").replace("\n","")
@@ -66,9 +76,9 @@ def list_children_factory(parentobjecttype, chilobjecttype, childobjectpluralize
             else:
                 iterator = Item.parent_index.query(chilobjecttype, Item.parent == parent)
 
-        items=[i.attribute_values for i in apply_options(iterator, options)]
+        #items=[i.attribute_values for i in apply_options(iterator, options)]
+        items=[merge_doc(i) for i in apply_options(iterator, options)]
         return items
-
 
 
 def base_factory(objecttype, parentobjecttype, parentidentitifier,identifier):
@@ -192,8 +202,8 @@ def base_factory(objecttype, parentobjecttype, parentidentitifier,identifier):
     def update_item(identifier,input, identity) :
         print "update_item <-", identifier, input, identity
         try :
-            bot = Item.get(objecttype,identifier)
-            doc = bot.attribute_values
+            item = Item.get(objecttype,identifier)
+            doc = item.attribute_values
         except Exception :
             raise errors.ObjectNotFound("Could not find %(objecttype)s with ID `%(botid)s`"%vars())
 
@@ -205,8 +215,8 @@ def base_factory(objecttype, parentobjecttype, parentidentitifier,identifier):
         term = doc["name"]+input.get("description", doc.get("description","-"))+input.get("tags", doc.get("tags","-"))
         actions.append(Item.search.set(term))
         print actions
-        bot.update(actions=actions)
-        return bot.attribute_values
+        item.update(actions=actions)
+        return item.attribute_values
 
 
 

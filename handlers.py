@@ -4,5 +4,7 @@ from grapher import App
 
 
 def handler(event, context) :
-    return App.handler(event, context)
+    x=  App.handler(event, context)
+    print x
+    return x
 

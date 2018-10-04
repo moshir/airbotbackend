@@ -7,7 +7,7 @@ from factory import base_factory, list_children_factory
 
 
 
-base_factory(objecttype="intent",parentobjecttype="bot",parentidentitifier="botid",identifier="intentid")
+#base_factory(objecttype="intent",parentobjecttype="bot",parentidentitifier="botid",identifier="intentid")
 list_children_factory(parentobjecttype="intent", chilobjecttype="rule", childobjectpluralized="rules")
 
 
@@ -33,51 +33,96 @@ def create_intent(botid, input, identity):
     input["creator"] = identity
     input["parent"] = botid
     input["search"] = input.get("name") + input.get("description", "-") + input.get("tags", "-")
+    input["doc"]={}
     print pprint.pformat(input)
     item = Item(**input)
     item.save()
 
+    return item.json()
 
-    reply_input= {}
-    reply_input["objecttype"] = "reply"
-    reply_input["ID"] = uri
-    reply_input["creator"] = identity
-    reply_input["createdat"] =ID.now()
-    reply_input["parent"] = uri
-    reply_input["name"] = "reply"
-    reply_input["search"] = "-"
-    reply = Item(**reply_input)
-    reply.save()
-
-    return item.attribute_values
 
 
 @App.field(
-    "getReplyConfig",
-    path  = "Intent/reply",
-    argmap ={
-        #"/arguments/intentid":  "intentid",
-        "/source/ID" : "intentid",
-        "/arguments/identity" : "identity"
+    field="getIntent",
+    path ="Query/getIntent",
+    argmap={
+        "/arguments/intentid": "intentid",
+        "/arguments/identity": "identity"
     }
 )
-def get_reply_config(intentid, identity):
-    try :
-        reply = Item.get("reply", intentid)
-        return reply.attribute_values
-    except Exception :
-        raise errors.ObjectNotFound("Reply %(intentid)s"%vars())
+def getIntent(identity, intentid) :
+    print "%/"*30
+    try:
+        intent= Item.get("intent", intentid)
+    except Exception:
+        raise errors.ObjectNotFound(intentid)
+
+    doc= intent.json()
+    doc.update(doc["doc"])
+    del doc["doc"]
+    print doc
+    return doc
+
+
+
+@App.field(
+    field="updateIntent",
+    path ="Mutation/updateIntent",
+    argmap={
+        "/arguments/intentid": "intentid",
+        "/arguments/identity": "identity",
+        "/arguments/input" : "data"
+    }
+)
+def updateIntent(identity, intentid, data) :
+    try:
+        v = Item.get("intent",intentid)
+    except Exception as e :
+        raise errors.ObjectNotFound(intentid)
+
+
+    v.update(actions=[
+        Item.doc.reply.set(data.get("reply",v.doc.reply)),
+        Item.doc.sql.set(data.get("sql",v.doc.sql)),
+        Item.description.set(data.get("description", v.description))
+    ])
+    d = v.json()
+    d.update(d["doc"])
+    del d["doc"]
+    return d
+
+
+@App.field(
+    field="deleteIntent",
+    path="Mutation/deleteIntent",
+    argmap={
+        "/arguments/intentid": "intentid",
+        "/arguments/identity": "identity"
+    }
+)
+def deleteIntent(identity, intentid):
+    try:
+        intent= Item.get("intent", intentid)
+        intent.delete()
+        rules = Item.parent_index.query(intentid)
+        for r in rules :
+            r.delete()
+        return True
+    except Exception:
+        return False
+
+    return False
 
 
 if __name__ =="__main__" :
-    print App.route({
-        "field": "getReplyConfig",
-        "source" : {
-            "ID" : "uri:intent:20180911183119:thisnewbot:howmany"
-        },
-        "identity": {
-            "claims": {
-                "email": "moshir.mikael@gmail.com"
-            }
+    print pprint.pformat(getIntent(intentid="uri:intent:demo:mybot:q", identity=""))
+    from grapher.json_utils import to_json
+
+    print pprint.pformat(to_json(App.route({
+        "field" : "getIntent",
+        "arguments": {
+            "intentid" : "uri:intent:demo:mybot:q",
+            "identity" : "xxx"
         }
-    })
+    })))
+

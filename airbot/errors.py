@@ -20,6 +20,9 @@ class MissingParameter(Exception):
     pass
 
 
+class AlreadyRunningError(Exception):
+    pass
+
 class InvalidParameter(Exception):
     pass
 
@@ -47,5 +50,8 @@ class GlueTableCreationError(Exception) :
     pass
 
 
+
+class FileStatusError(Exception) :
+    pass
 class InvalidDatasetColumns (Exception) :
     pass

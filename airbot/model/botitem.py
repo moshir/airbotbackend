@@ -1,8 +1,62 @@
 from pynamodb.models import Model
-from pynamodb.attributes import UnicodeAttribute
+from pynamodb.attributes import UnicodeAttribute, MapAttribute,ListAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import base64
 import json
+
+
+class Base(Model) :
+    def json(self):
+        return {
+            "name" : self.name,
+            "description" : self.description,
+            "objecttype": self.objecttype,
+            "ID" : self.ID,
+            "doc" : {
+                "aliases":list(self.doc.aliases),
+                "replacements":list(self.doc.replacements),
+                "status" : self.doc.status,
+                "columns": list([{"Name" : c.Name ,"Type" : c.Type} for c in self.doc.columns]),
+                "bucket" : self.doc.bucket,
+                "database" : self.doc.database,
+                "tablebname": self.doc.tablename,
+                "field": self.doc.field,
+                "prefix": self.doc.prefix,
+                "crawler" : self.doc.crawler,
+                "sql" : self.doc.sql,
+                "reply" : list(self.doc.reply)
+            },
+            "parent" : self.parent,
+            "search" :self.search,
+            "tags" : self.tags,
+            "creator" : self.creator,
+            "createdat" : self.createdat,
+            "updateat" : self.updateat,
+        }
+
+class Column(MapAttribute) :
+    Name = UnicodeAttribute(attr_name="Name")
+    Type= UnicodeAttribute(attr_name="Type")
+
+
+
+class Doc(MapAttribute):
+    aliases = ListAttribute(attr_name="aliases", default=[])
+    status = UnicodeAttribute(attr_name="status", default="ready")
+    columns = ListAttribute(attr_name="columns", of=Column,default=[])
+    bucket = UnicodeAttribute(attr_name="bucket", default="")
+    database = UnicodeAttribute(attr_name="database", default="")
+    tablename= UnicodeAttribute(attr_name="tablename", default="")
+    field= UnicodeAttribute(attr_name="field", default="")
+    crawler= UnicodeAttribute(attr_name="crawler", default="")
+    prefix=UnicodeAttribute(attr_name="prefix", default="")
+    replacements=ListAttribute(attr_name="replacements", default=[])
+    sql=UnicodeAttribute(attr_name="sql", default="")
+    reply =ListAttribute(attr_name="reply", default=[])
+
+
+
+
 
 class SearchIndex(GlobalSecondaryIndex):
     """
@@ -50,7 +104,7 @@ class NameIndex(GlobalSecondaryIndex):
     name = UnicodeAttribute(range_key=True)
     objecttype= UnicodeAttribute(hash_key=True)
 
-class Item(Model):
+class Item(Base):
     """
     A Bot Resource
     """
@@ -67,30 +121,14 @@ class Item(Model):
     search = UnicodeAttribute()
     description= UnicodeAttribute(default="-")
     tags = UnicodeAttribute(default="-")
-    doc = UnicodeAttribute(default='{"doc" : "empty"}')
+    #doc = UnicodeAttribute(default='{"doc" : "empty"}')
+    doc = Doc()
     creator = UnicodeAttribute(default='unknown')
     createdat = UnicodeAttribute()
     updateat= UnicodeAttribute(default="-")
+    resource_status=UnicodeAttribute(default="-")
 
     search_index = SearchIndex()
     parent_index = ParentIndex()
     name_index = NameIndex()
 
-
-#Item.delete_table()
-#Item.create_table()
-
-'''
-bots = Item.parent_index.query("bot",Item.parent.__eq__("uri:account:20180911183119"),limit=2,last_evaluated_key=None)
-for bot in  bots :
-    print "page1",bot
-
-#print bots.last_evaluated_key
-#k =base64.encodestring(json.dumps(bots.last_evaluated_key))
-#print json.loads(base64.decodestring(k))
-page2 = Item.parent_index.query("bot",Item.parent.__eq__("uri:account:20180911183119"), last_evaluated_key=bots.last_evaluated_key)
-for bot in  page2:
-    print "page2",bot
-
-print page2.last_evaluated_key
-'''

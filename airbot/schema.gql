@@ -63,8 +63,7 @@ type Mutation {
 	deleteRule(ruleid: ID!): Boolean
 	refreshEntitySchema(entityid: ID!): Boolean
 	getStsToken: String
-
-    createOrUpdateLexBot(botid:ID!) : String
+	createOrUpdateLexBot(botid: ID!): String
 }
 
 input New {
@@ -79,14 +78,14 @@ input New {
 }
 
 type Query {
-    askBot(botid:ID!, question:String) : String
+	askBot(botid: ID!, question: String): String
 	meta: String
 	getAccount(accountid: ID!): Account
 	listMyAccounts: [Account]
 	listBots(options: QueryOptions): [Bot]
 	getBot(botid: ID!): Bot
 	getEntity(entityid: ID!): Entity
-    getBotStatus(botid:ID!) : String
+	getBotStatus(botid: ID!): String
 	getVariable(variableid: ID!): Variable
 	getIntent(intentid: ID!): Intent
 	getRule(ruleid: ID!): Rule
@@ -124,7 +123,9 @@ input Update {
 	sql: String
 	reply: [String]
 	replacements: [String]
+	filters: [String]
 	field: String
+	type: String
 	doc: String
 }
 
@@ -139,5 +140,8 @@ type Variable {
 	name: String!
 	description: String
 	tags: String
+	field: String
+	type: String
 	aliases: [String]
+	filters: [String]
 }

@@ -1,3 +1,7 @@
+import os
+filename=os.path.join(os.path.dirname(__file__),"pynamodbconfig.py")
+print filename
+os.environ["PYNAMODB_CONFIG"]= filename
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, MapAttribute,ListAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
@@ -18,9 +22,14 @@ class Base(Model) :
                 "status" : self.doc.status,
                 "columns": list([{"Name" : c.Name ,"Type" : c.Type} for c in self.doc.columns]),
                 "bucket" : self.doc.bucket,
+                "field" : self.doc.field,
                 "database" : self.doc.database,
                 "tablebname": self.doc.tablename,
-                "field": self.doc.field,
+                "eq" : self.doc.filters.eq,
+                "neq" : self.doc.filters.neq,
+                "gte" : self.doc.filters.gte,
+                "lte" : self.doc.filters.lte,
+                "type": self.doc.type,
                 "prefix": self.doc.prefix,
                 "crawler" : self.doc.crawler,
                 "sql" : self.doc.sql,
@@ -38,16 +47,23 @@ class Column(MapAttribute) :
     Name = UnicodeAttribute(attr_name="Name")
     Type= UnicodeAttribute(attr_name="Type")
 
+class Filter(MapAttribute) :
+    eq=ListAttribute(attr_name="eq")
+    neq=ListAttribute(attr_name="neq")
+    gte=ListAttribute(attr_name="gte")
+    lte=ListAttribute(attr_name="lte")
 
 
 class Doc(MapAttribute):
     aliases = ListAttribute(attr_name="aliases", default=[])
+    filters = Filter(attr_name="filters", default={}) #ListAttribute(attr_name="filters", default=[])
     status = UnicodeAttribute(attr_name="status", default="ready")
     columns = ListAttribute(attr_name="columns", of=Column,default=[])
     bucket = UnicodeAttribute(attr_name="bucket", default="")
     database = UnicodeAttribute(attr_name="database", default="")
     tablename= UnicodeAttribute(attr_name="tablename", default="")
     field= UnicodeAttribute(attr_name="field", default="")
+    type= UnicodeAttribute(attr_name="type", default="Dimension")
     crawler= UnicodeAttribute(attr_name="crawler", default="")
     prefix=UnicodeAttribute(attr_name="prefix", default="")
     replacements=ListAttribute(attr_name="replacements", default=[])
@@ -117,6 +133,7 @@ class Item(Base):
     objecttype= UnicodeAttribute(hash_key=True)
     ID = UnicodeAttribute(range_key=True)
     parent = UnicodeAttribute()
+    botname=UnicodeAttribute(default="-")
     name= UnicodeAttribute()
     search = UnicodeAttribute()
     description= UnicodeAttribute(default="-")

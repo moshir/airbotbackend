@@ -1,0 +1,2 @@
+max_retry_attempts=20
+base_backoff_ms=1

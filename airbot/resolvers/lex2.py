@@ -244,7 +244,7 @@ def sample_values(variableid):
 
 def sample_values(variableid):
     return ["something","something else","anything"]
-
+'''
 @App.field(
     "createOrUpdateLexBot",
     path = "Mutation/createOrUpdateLexBot",
@@ -253,6 +253,7 @@ def sample_values(variableid):
         "/arguments/botid" : "botid"
     }
 )
+'''
 def createOrUpdateLexBot(identity,botid):
     bot =Item.get("bot",botid)
     entities = Item.query("entity",Item.parent.__eq__(botid))
@@ -323,7 +324,7 @@ def createOrUpdateLexBot(identity,botid):
     logger().critical("Putting Bot %s", bot.name)
     Bot.build(bot.name, intents=[i["name"] for i in intents ])
 
-
+    Bot.put_alias(botname=bot.botname)
 
     return botgraph
 

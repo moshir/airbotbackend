@@ -107,6 +107,8 @@ class Bot:
     @classmethod
     def add_slot_type(cls, slotname, values):
         """ Adds a slot type to an intent """
+
+        print "add_slot_type ", slotname,"with " , len(values), "values"
         args = {
             "name": slotname,
             "description": 'xxx',
@@ -123,8 +125,8 @@ class Bot:
             pass
         cls.lex().put_slot_type(**args)
         slotdata = cls.get_slot_type(slotname)
-        "creating new version for slottype ", slotname
         cls.lex().create_slot_type_version(name=slotname,checksum=slotdata["checksum"])
+        print "     " , slotname,"done"
 
     @classmethod
     def get_intent(cls, name):

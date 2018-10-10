@@ -80,7 +80,7 @@ class AthenaQuery:
                 MaxResults = 500
             )
             #print "Response received"
-            print pprint.pformat(response)
+            #print pprint.pformat(response)
             return {
                 "success" : True,
                 "data" : {
@@ -117,7 +117,7 @@ class AthenaQuery:
                         return cls.get_results(**{"QueryExecutionId" : start["data"]["QueryExecutionId"]})
                     else:
                         #print "waiting" , nbtry
-                        time.sleep(3)
+                        time.sleep(1)
                 if watcher["success"] is False :
                     return watcher
             return {

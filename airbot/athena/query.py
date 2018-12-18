@@ -64,7 +64,11 @@ class AthenaQuery:
                 fieldname = fields[index]["Name"]
                 if len(v.keys()):
                     fieldtype= v.keys()[0]
-                    record[fieldname] = v[fieldtype]
+                    try :
+                        V = float(v[fieldtype])
+                    except Exception :
+                        V = v[fieldtype]
+                    record[fieldname] = V#v[fieldtype]
                 else :
                     record[fieldname] = ""
             records.append(record)
@@ -80,7 +84,7 @@ class AthenaQuery:
                 MaxResults = 500
             )
             #print "Response received"
-            #print pprint.pformat(response)
+            print pprint.pformat(response)
             return {
                 "success" : True,
                 "data" : {

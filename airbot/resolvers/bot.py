@@ -308,12 +308,16 @@ def askBot(identity, botid, question) :
 
 
     else :
-        return random.choice([
+        message = random.choice([
             "Sorry, this is not clear for and old bot",
             "Can you try to reformulate ?",
             "Hmm, i'm just a bot",
             "Well, this is clear, i'm not really awake right now"
         ])
+        return json.dumps({
+            "display" : "error",
+            "data" : message
+        })
 
 
 
@@ -370,7 +374,8 @@ if __name__=="__main__" :
             "identity": "service",
             "botid": "uri:bot:demo:salesbot",
             #"question": "show average revenue of sales with country equals Australia per country"
-            "question": "show number of sales"
+            #"question": "show number of sales"
+            "question": "tell me average revenue of sales by country"
         }
 
     }

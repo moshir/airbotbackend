@@ -152,9 +152,12 @@ class Cube :
 
 
     def resolve(self, data):
+
+
         slots = {}
         for k in data.keys() :
             slots[k.replace(self.name,"")]= data[k]
+        print pprint.pformat(slots)
 
 
         print pprint.pformat(slots)
@@ -196,7 +199,7 @@ class Cube :
         else :
             semantics["display"] ["type"]= "text"
         if len(dimensions) :
-            dims = ",".join([d["field"] for d in dimensions])
+            dims = ",".join(["",",".join([d["field"] for d in dimensions])])
         else :
             dims =""
 

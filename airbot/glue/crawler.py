@@ -53,7 +53,8 @@ class Crawler:
                 {
                     'Path': 's3://%(bucket)s'%kwargs + ("/%(prefix)s"% kwargs if "prefix" in kwargs.keys() else "")
                 }
-            ]
+            ],
+            'Configuration':'{ "Version": 1.0, "CrawlerOutput": { "Partitions": { "AddOrUpdateBehavior": "InheritFromTable" } } }'
         }
         try :
             logger().info("Creating crawler `%s` for bucket `%s` path `%s` and updating database `%s`",kwargs["name"],kwargs["bucket"],kwargs.get("prefix","*"),kwargs["database"])

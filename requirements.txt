@@ -8,3 +8,4 @@ PyJWT
 git+ssh://git@github.com/moshir/grapher.git
 Unidecode
 tracery
+sagemaker
